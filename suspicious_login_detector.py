@@ -31,28 +31,24 @@ def load_events(path):
 
 
 def find_suspicious_runs(events):
-    """
-    Given a single user's list of (timestamp, status) events (any order),
-    return every consecutive FAILED run that meets the alert condition:
-    length >= FAILED_THRESHOLD and (last - first) <= TIME_WINDOW.
-    """
-    ordered = sorted(events, key=lambda e: e[0])
-
+    ordered = sorted(events,key=lambda e:e[0])
     alerts = []
-    run = []
-
-    def check_and_flush():
-        if len(run) >= FAILED_THRESHOLD and (run[-1] - run[0]) <= TIME_WINDOW:
-            alerts.append((len(run), run[0], run[-1]))
-        run.clear()
-
-    for timestamp, status in ordered:
-        if status == "FAILED":
-            run.append(timestamp)
-        else:  # SUCCESS ends the current run
-            check_and_flush()
-    check_and_flush()  # flush a run that reaches the end of the log
-
+    left = 0  
+    for right in range(len(ordered)): 
+        timestamp,status = ordered[right]
+        
+        if status == "SUCCESS":
+            left = right+1 
+            continue
+            
+        while left <= right and (ordered[right][0]-ordered[left][0]) > TIME_WINDOW:
+            left += 1
+            
+        failed_count = right-left+1
+        
+        if failed_count >= FAILED_THRESHOLD:
+            alerts.append((failed_count,ordered[left][0],ordered[right][0]))
+            left = right+1
     return alerts
 
 
