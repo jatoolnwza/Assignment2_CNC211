@@ -1,12 +1,3 @@
-"""
-Suspicious Login Detection
-CNC211 - Assignment 2
-
-Detects accounts with 3 or more consecutive FAILED login attempts whose
-first and last attempt in that run are at most 5 minutes apart.
-A SUCCESS resets the run; a new FAILED streak starts counting from zero.
-"""
-
 import csv
 import sys
 from collections import defaultdict
@@ -18,7 +9,6 @@ TIME_WINDOW = timedelta(minutes=5)
 
 
 def load_events(path):
-    """Read the log file and group (timestamp, status) events by username."""
     events_by_user = defaultdict(list)
     with open(path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -33,19 +23,19 @@ def load_events(path):
 def find_suspicious_runs(events):
     ordered = sorted(events,key=lambda e:e[0])
     alerts = []
-    left = 0  
-    for right in range(len(ordered)): 
+    left = 0
+    for right in range(len(ordered)):
         timestamp,status = ordered[right]
-        
+
         if status == "SUCCESS":
-            left = right+1 
+            left = right+1
             continue
-            
+
         while left <= right and (ordered[right][0]-ordered[left][0]) > TIME_WINDOW:
             left += 1
-            
+
         failed_count = right-left+1
-        
+
         if failed_count >= FAILED_THRESHOLD:
             alerts.append((failed_count,ordered[left][0],ordered[right][0]))
             left = right+1
