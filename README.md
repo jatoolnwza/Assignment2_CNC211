@@ -9,7 +9,8 @@
 
 | ไฟล์ | รายละเอียด |
 |---|---|
-| `suspicious_login_detector.py` | โปรแกรมหลักสำหรับอ่านและวิเคราะห์ Log |
+| `detect_a.py` | อัลกอริทึม A: อ่าน Log และตรวจจับด้วย Sliding Window (two-pointer) |
+| `detect_b.py` | อัลกอริทึม B: ตรวจจับด้วย Brute Force (สำหรับเปรียบเทียบ) |
 | `login.txt` | ข้อมูล Log ตัวอย่างที่ใช้ทดสอบ (`timestamp,username,ip_address,status`) |
 | `REPORT.md` | รายงานวิเคราะห์และเปรียบเทียบอัลกอริทึม (ไม่เกิน 2 หน้า A4) |
 
@@ -23,7 +24,7 @@
 ## วิธีใช้งาน
 
 ```bash
-python3 suspicious_login_detector.py login.txt
+python3 detect_a.py login.txt
 ```
 
 ### ตัวอย่างผลลัพธ์
@@ -38,4 +39,3 @@ Suspicious login activity detected:
 ## ความต้องการของระบบ
 
 - Python 3.7 ขึ้นไป (ไม่ต้องติดตั้งไลบรารีเพิ่มเติม ใช้เฉพาะ standard library)
-</content>
