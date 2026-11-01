@@ -1,3 +1,4 @@
+"""Algorithm B: brute-force comparison for suspicious login detection."""
 from datetime import timedelta
 
 FAILED_THRESHOLD = 3
@@ -5,33 +6,34 @@ TIME_WINDOW = timedelta(minutes=5)
 
 
 def detect_b(events_by_user):
+    """Check every possible start position in each consecutive FAILED run."""
     report = {}
-
     for username, events in events_by_user.items():
-        ordered = sorted(events, key=lambda e: e[0])
-        n = len(ordered)
+        ordered = sorted(events, key=lambda event: event[0])
+        runs = []
+        current = []
+        for event in ordered:
+            if event[1] == "FAILED":
+                current.append(event)
+            else:
+                if current:
+                    runs.append(current)
+                    current = []
+        if current:
+            runs.append(current)
+
         alerts = []
-
-        for i in range(n):
-            start_time, start_status = ordered[i]
-            if start_status != "FAILED":
-                continue
-
-            count = 0
-            last_time = start_time
-            j = i
-            while j < n and ordered[j][1] == "FAILED":
-                if ordered[j][0] - start_time > TIME_WINDOW:
-                    break
-                count += 1
-                last_time = ordered[j][0]
-                j += 1
-
-            is_run_start = i == 0 or ordered[i - 1][1] != "FAILED"
-            if is_run_start and count >= FAILED_THRESHOLD:
-                alerts.append((count, start_time, last_time))
-
+        for run in runs:
+            for start in range(len(run)):
+                end = start
+                while end + 1 < len(run) and run[end + 1][0] - run[start][0] <= TIME_WINDOW:
+                    end += 1
+                count = end - start + 1
+                can_extend_left = (
+                    start > 0 and run[end][0] - run[start - 1][0] <= TIME_WINDOW
+                )
+                if count >= FAILED_THRESHOLD and not can_extend_left:
+                    alerts.append((count, run[start][0], run[end][0]))
         if alerts:
             report[username] = alerts
-
     return report

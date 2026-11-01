@@ -1,0 +1,6 @@
+timestamp,username,ip_address,status
+2026-10-01 11:00:00,charlie,192.168.1.30,FAILED
+2026-10-01 11:01:00,charlie,192.168.1.30,FAILED
+2026-10-01 11:02:00,charlie,192.168.1.30,SUCCESS
+2026-10-01 11:03:00,charlie,192.168.1.30,FAILED
+2026-10-01 11:04:00,charlie,192.168.1.30,FAILED
