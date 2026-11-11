@@ -1,46 +1,25 @@
-import csv
 import sys
-from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import timedelta
 
-TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S"
+from load_logs import load_logs as read_logs
+
 FAILED_THRESHOLD = 3
 TIME_WINDOW = timedelta(minutes=5)
-REQUIRED_COLUMNS = {"timestamp", "username", "status"}
 
 
 def load_events(path):
-    events_by_user = defaultdict(list)
-
-    with open(path, newline="", encoding="utf-8-sig") as f:
-        reader = csv.DictReader(f)
-        if not reader.fieldnames or not REQUIRED_COLUMNS.issubset(reader.fieldnames):
-            raise ValueError("CSV must contain timestamp, username, and status columns")
-
-        for line_number, row in enumerate(reader, start=2):
-            try:
-                username = (row.get("username") or "").strip()
-                timestamp_text = (row.get("timestamp") or "").strip()
-                status = (row.get("status") or "").strip().upper()
-                if not username:
-                    raise ValueError("username is empty")
-                if status not in {"FAILED", "SUCCESS"}:
-                    raise ValueError("status must be FAILED or SUCCESS")
-                timestamp = datetime.strptime(timestamp_text, TIMESTAMP_FORMAT)
-            except (ValueError, TypeError) as error:
-                raise ValueError(f"Invalid CSV data on line {line_number}: {error}") from error
-            events_by_user[username].append((timestamp, status))
-
-    return dict(events_by_user)
+    user_logs = read_logs(path)
+    return {
+        username: [(record["timestamp"], record["status"]) for record in records]
+        for username, records in user_logs.items()
+    }
 
 
 def find_suspicious_runs(events):
-    is_sorted = all(events[i][0] <= events[i + 1][0] for i in range(len(events) - 1))
-    ordered = events if is_sorted else sorted(events, key=lambda event: event[0])
     alerts = []
     run = []
 
-    for event in ordered:
+    for event in events:
         timestamp, status = event
         if status == "FAILED":
             run.append(event)
@@ -95,7 +74,7 @@ def main():
 
     try:
         report = detect_suspicious_logins(path)
-    except (OSError, ValueError, csv.Error) as error:
+    except (OSError, ValueError) as error:
         print(f"Error: {error}", file=sys.stderr)
         return 1
 

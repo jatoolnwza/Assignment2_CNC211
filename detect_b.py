@@ -9,8 +9,7 @@ def detect_b(events_by_user):
     """Check every possible start position in each consecutive FAILED run."""
     report = {}
     for username, events in events_by_user.items():
-        is_sorted = all(events[i][0] <= events[i + 1][0] for i in range(len(events) - 1))
-        ordered = events if is_sorted else sorted(events, key=lambda event: event[0])
+        ordered = sorted(events, key=lambda event: event[0])
         runs = []
         current = []
         for event in ordered:
