@@ -35,7 +35,8 @@ def load_events(path):
 
 
 def find_suspicious_runs(events):
-    ordered = sorted(events, key=lambda event: event[0])
+    is_sorted = all(events[i][0] <= events[i + 1][0] for i in range(len(events) - 1))
+    ordered = events if is_sorted else sorted(events, key=lambda event: event[0])
     alerts = []
     run = []
 
