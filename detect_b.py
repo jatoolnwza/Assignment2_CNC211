@@ -6,34 +6,39 @@ TIME_WINDOW = timedelta(minutes=5)
 
 
 def detect_b(events_by_user):
-    """Check every possible start position in each consecutive FAILED run."""
+    """Check every (start, end) pair of FAILED events directly with a
+    nested loop, instead of maintaining a two-pointer window like Algorithm A."""
     report = {}
     for username, events in events_by_user.items():
         ordered = sorted(events, key=lambda event: event[0])
-        runs = []
-        current = []
-        for event in ordered:
-            if event[1] == "FAILED":
-                current.append(event)
-            else:
-                if current:
-                    runs.append(current)
-                    current = []
-        if current:
-            runs.append(current)
-
+        n = len(ordered)
         alerts = []
-        for run in runs:
-            for start in range(len(run)):
-                end = start
-                while end + 1 < len(run) and run[end + 1][0] - run[start][0] <= TIME_WINDOW:
-                    end += 1
+
+        for start in range(n):
+            if ordered[start][1] != "FAILED":
+                continue
+
+            for end in range(start, n):
+                if ordered[end][1] != "FAILED":
+                    break
+                if ordered[end][0] - ordered[start][0] > TIME_WINDOW:
+                    break
+
                 count = end - start + 1
-                can_extend_left = (
-                    start > 0 and run[end][0] - run[start - 1][0] <= TIME_WINDOW
+                is_leftmost = (
+                    start == 0
+                    or ordered[start - 1][1] != "FAILED"
+                    or ordered[end][0] - ordered[start - 1][0] > TIME_WINDOW
                 )
-                if count >= FAILED_THRESHOLD and not can_extend_left:
-                    alerts.append((count, run[start][0], run[end][0]))
+                is_rightmost = (
+                    end == n - 1
+                    or ordered[end + 1][1] != "FAILED"
+                    or ordered[end + 1][0] - ordered[start][0] > TIME_WINDOW
+                )
+
+                if count >= FAILED_THRESHOLD and is_leftmost and is_rightmost:
+                    alerts.append((count, ordered[start][0], ordered[end][0]))
+
         if alerts:
             report[username] = alerts
     return report
